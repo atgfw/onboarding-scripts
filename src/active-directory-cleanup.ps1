@@ -22,7 +22,7 @@ function New-DisabledUsersOU {
     return $OU
 }
 
-<# Disables all #>
+<# Disables all inactive Users #>
 function Disable-DisactiveADUsers() {
     param (
         [int]$DaysInactive = 60,
