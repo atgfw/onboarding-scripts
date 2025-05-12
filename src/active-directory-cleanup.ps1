@@ -1,54 +1,79 @@
 <#
-    NOTES/WARNING:
-    This is an import of an AD cleanup script that used to be shared through sharepoint.
-    I have heard stories of it not working great in the past, so I am working to improve it
-    slowly.
-
-    - Noah
+    TO RUN:
 #>
 
 import-module activedirectory  
-######################### SET INACTIVE DAYS HERE #############################
-$DaysInactive = 60
-##############################################################################
-$domain = "$env:userdnsdomain"  
-$time = (Get-Date).Adddays(-($DaysInactive)) 
-$Filter = {LastLogonTimeStamp -lt $time -and enabled -eq $true 
-    -and userprincipalname -notlike '*scan*' 
-    -and userprincipalname -notlike '*vpn*' 
-    -and userprincipalname -notlike '*service*' 
-    -and userprincipalname -notlike '*QB*' 
-    -and userprincipalname -notlike '*sync*' 
-    -and userprincipalname -notlike '*aad*'   
-    -and userprincipalname -notlike '*rely*'
-    -and userprincipalname -notlike '*MSOL*'
-    -and userprincipalname -notlike '*sql*'
-    -and userprincipalname -notlike '*copier*'
-    -and userprincipalname -notlike '*$*'
-    -and userprincipalname -notlike '*ldap*'
-    -and userprincipalname -notlike '*titan*'
-    -and userprincipalname -notlike '*sense*'}
 
-# 1/10/2025: Added explicit Out-Host to prevent confirmation dialogue from appearing before list of users
-Get-ADUser -Filter $Filter -Properties LastLogonTimeStamp | select-object Name,Userprincipalname,Enabled,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd_hh:mm:ss')}} | sort-object stamp | Out-Host
+<# Creates a disabled Users OU and returns it #>
+function New-DisabledUsersOU {
+    param (
+        [switch]$WhatIf
+    )
+    if ($WhatIf) {
+        $WhatIfPreference = $true
+    }
+
+    # Create Disabled Users OU
+    $ouParams = @{
+        Name = "Disabled Users"
+        Path = (Get-ADDomain).DistinguishedName
+    }
+    $OU = New-ADOrganizationalUnit @ouParams
+    return $OU
+}
+
+<# Disables all #>
+function Disable-DisactiveADUsers() {
+    param (
+        [int]$DaysInactive = 60,
+        [switch]$WhatIf
+    )
+    if ($WhatIf) {
+        $WhatIfPreference = $true
+    }
+
+    $time = (Get-Date).Adddays(-($DaysInactive)) 
+    $filter = {LastLogonTimeStamp -lt $time -and enabled -eq $true 
+        -and userprincipalname -notlike '*scan*' 
+        -and userprincipalname -notlike '*vpn*' 
+        -and userprincipalname -notlike '*service*' 
+        -and userprincipalname -notlike '*QB*' 
+        -and userprincipalname -notlike '*sync*' 
+        -and userprincipalname -notlike '*aad*'   
+        -and userprincipalname -notlike '*rely*'
+        -and userprincipalname -notlike '*MSOL*'
+        -and userprincipalname -notlike '*sql*'
+        -and userprincipalname -notlike '*copier*'
+        -and userprincipalname -notlike '*$*'
+        -and userprincipalname -notlike '*ldap*'
+        -and userprincipalname -notlike '*titan*'
+        -and userprincipalname -notlike '*sense*'}
+
+    $inactiveUsers = Get-ADUser -Filter $Filter -Properties LastLogonTimeStamp
+    $inactiveUsers 
+        | Select-Object Name,Userprincipalname,Enabled,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd_hh:mm:ss')}}
+        | sort-object stamp
+        | Out-Host
+    $confirmation = Read-Host "Are you Sure You Want To Disable these users? (y/n)"
+    if ($confirmation -eq 'y') {
+        foreach ($inactiveUser in $inactiveUsers) {
+            # Disable those users
+            Disable-ADAccount $inactiveUser
+            # Move those Disabled Users to an OU
+            Move-ADObject $OU.DistinguishedName
+        }
+    } else {
+        Write-Host "No users were disabled."
+    }
+}
+
 
 # Output Name and lastLogonTimestamp into CSV  
 # select-object Name,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd_hh:mm:ss')}} | # export-csv OLD_User.csv -notypeinformation
 
-$confirmation = Read-Host "Are you Sure You Want To Disable these users? (y/n)"
-if ($confirmation -eq 'y') {
-    # Disable those users
-    Get-ADUser -Filter $Filter -Properties LastLogonTimeStamp | Disable-ADAccount -Confirm
 
-    ## Move those Disabled Users to an OU
-    # $DomainDN = get-addomain | select-object DistinguishedName | foreach DistinguishedName
-    # New-ADOrganizationalUnit -Name "Disabled Users" -Path $DomainDN
-    # $OUPath = "OU=Disabled Users,$DomainDN"
-    # Get-ADUser -LDAPFilter "(&(objectCategory=user)(objectClass=user)(useraccountcontrol:1.2.840.113556.1.4.803:=2))" | Move-ADObject -TargetPath $OUPath
-
-} else {
-    Write-Host "No users were disabled."
-}
+<#
+## Disable inactive computers, to be better integrated later
 
 $hash_lastLogonTimestamp = @{Name="LastLogonTimeStamp";Expression={([datetime]::FromFileTime($_.LastLogonTimeStamp))}}
 $hash_pwdLastSet = @{Name="pwdLastSet";Expression={([datetime]::FromFileTime($_.pwdLastSet))}}
@@ -64,4 +89,4 @@ $DomainDN = get-addomain | select-object DistinguishedName | foreach Distinguish
 New-ADOrganizationalUnit -Name "Disabled Computers" -Path $DomainDN
 $OUPath = "OU=Disabled Computers,$DomainDN"
 Get-ADComputer -LDAPFilter "(&(objectCategory=computer)(objectClass=computer)(useraccountcontrol:1.2.840.113556.1.4.803:=2))" | Move-ADObject -TargetPath $OUPath
-
+#>
