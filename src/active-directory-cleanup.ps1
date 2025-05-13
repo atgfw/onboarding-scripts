@@ -50,9 +50,9 @@ function Disable-DisactiveADUsers() {
         -and userprincipalname -notlike '*sense*'}
 
     $inactiveUsers = Get-ADUser -Filter $Filter -Properties LastLogonTimeStamp
-    $inactiveUsers 
-        | Select-Object Name,Userprincipalname,Enabled,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd_hh:mm:ss')}}
-        | sort-object stamp
+    $inactiveUsers `
+        | Select-Object Name,Userprincipalname,Enabled,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd_hh:mm:ss')}} `
+        | sort-object stamp `
         | Out-Host
     $confirmation = Read-Host "Are you Sure You Want To Disable these users? (y/n)"
     if ($confirmation -eq 'y') {
