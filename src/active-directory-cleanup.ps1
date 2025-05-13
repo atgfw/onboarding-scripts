@@ -23,7 +23,7 @@ function New-DisabledUsersOU {
 }
 
 <# Disables all inactive Users #>
-function Disable-DisactiveADUsers() {
+function Disable-InactiveADUsers() {
     param (
         [int]$DaysInactive = 60,
         [switch]$WhatIf
@@ -71,22 +71,26 @@ function Disable-DisactiveADUsers() {
 # Output Name and lastLogonTimestamp into CSV  
 # select-object Name,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd_hh:mm:ss')}} | # export-csv OLD_User.csv -notypeinformation
 
+function Disable-InactiveADComputers {
+    ## Disable inactive computers, to be better integrated later
 
-<#
-## Disable inactive computers, to be better integrated later
+    #Custom property for Last Logon in table
+    $hash_lastLogonTimestamp = @{Name="LastLogonTimeStamp";Expression={([datetime]::FromFileTime($_.LastLogonTimeStamp))}}
 
-$hash_lastLogonTimestamp = @{Name="LastLogonTimeStamp";Expression={([datetime]::FromFileTime($_.LastLogonTimeStamp))}}
-$hash_pwdLastSet = @{Name="pwdLastSet";Expression={([datetime]::FromFileTime($_.pwdLastSet))}}
+    # Get all AD Computer with lastLogonTimestamp less than our time and set to enable 
+    Get-ADComputer -Filter {LastLogonTimeStamp -lt $time -and enabled -eq $true} -ResultPageSize 2000 -resultSetSize $null -Properties lastLogonTimestamp,Name,OperatingSystem,SamAccountName,DistinguishedName `
+        | Select-Object samaccountname,$hash_lastLogonTimestamp,OperatingSystem,SID `
+        | Sort-object samaccountname
 
-# Get all AD Computer with lastLogonTimestamp less than our time and set to enable 
-Get-ADComputer -Filter {LastLogonTimeStamp -lt $time -and enabled -eq $true} -ResultPageSize 2000 -resultSetSize $null -Properties lastLogonTimestamp,Name,OperatingSystem,SamAccountName,DistinguishedName | select samaccountname,$hash_lastLogonTimestamp,OperatingSystem,SID | Sort-object samaccountname
+    # Disable those computers
+    Get-ADComputer -Filter {LastLogonTimeStamp -lt $time -and enabled -eq $true} -Properties lastLogonTimestamp,Name,OperatingSystem,SamAccountName,DistinguishedName `
+        | Disable-ADAccount
 
-# Disable those computers
-Get-ADComputer -Filter {LastLogonTimeStamp -lt $time -and enabled -eq $true} -Properties lastLogonTimestamp,Name,OperatingSystem,SamAccountName,DistinguishedName | Disable-ADAccount
-
-# Move those Disabled Computers to an OU
-$DomainDN = get-addomain | select-object DistinguishedName | foreach DistinguishedName
-New-ADOrganizationalUnit -Name "Disabled Computers" -Path $DomainDN
-$OUPath = "OU=Disabled Computers,$DomainDN"
-Get-ADComputer -LDAPFilter "(&(objectCategory=computer)(objectClass=computer)(useraccountcontrol:1.2.840.113556.1.4.803:=2))" | Move-ADObject -TargetPath $OUPath
-#>
+    # Move those Disabled Computers to an OU
+    $DomainDN = get-addomain `
+        | select-object DistinguishedName `
+        | Foreach-Object DistinguishedName
+    New-ADOrganizationalUnit -Name "Disabled Computers" -Path $DomainDN
+    $OUPath = "OU=Disabled Computers,$DomainDN"
+    Get-ADComputer -LDAPFilter "(&(objectCategory=computer)(objectClass=computer)(useraccountcontrol:1.2.840.113556.1.4.803:=2))" | Move-ADObject -TargetPath $OUPath
+}
