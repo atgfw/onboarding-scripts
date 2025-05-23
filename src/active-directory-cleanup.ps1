@@ -1,37 +1,14 @@
 <#
-    TO RUN:
+    Active Directory Cleanup Utilities
 #>
 
 import-module activedirectory  
 
-<# Creates a disabled Users OU and returns it #>
-function New-DisabledUsersOU {
+
+function Get-InactiveADUsers() {
     param (
-        [switch]$WhatIf
+        [int]$DaysInactive = 60
     )
-    if ($WhatIf) {
-        $WhatIfPreference = $true
-    }
-
-    # Create Disabled Users OU
-    $ouParams = @{
-        Name = "Disabled Users"
-        Path = (Get-ADDomain).DistinguishedName
-    }
-    $OU = New-ADOrganizationalUnit @ouParams
-    return $OU
-}
-
-<# Disables all inactive Users #>
-function Disable-InactiveADUsers() {
-    param (
-        [int]$DaysInactive = 60,
-        [switch]$WhatIf
-    )
-    if ($WhatIf) {
-        $WhatIfPreference = $true
-    }
-
     $time = (Get-Date).Adddays(-($DaysInactive)) 
     $filter = {LastLogonTimeStamp -lt $time -and enabled -eq $true 
         -and userprincipalname -notlike '*scan*' 
@@ -49,28 +26,46 @@ function Disable-InactiveADUsers() {
         -and userprincipalname -notlike '*titan*'
         -and userprincipalname -notlike '*sense*'}
 
-    $inactiveUsers = Get-ADUser -Filter $Filter -Properties LastLogonTimeStamp
+    return Get-ADUser -Filter $Filter
+}
+
+<# Disables all inactive Users #>
+function Disable-InactiveADUsers() {
+    param (
+        [int]$DaysInactive = 60,
+        [ADOrgan]
+        [switch]$WhatIf
+    )
+
+    # Respect WhatIf preference to the best of our ability
+    if ($WhatIf) {
+        $WhatIfPreference = $true
+    }
+
+    # Get and show Inactive Users
+    $inactiveUsers = Get-InactiveADUsers -DaysInactive $DaysInactive
     $inactiveUsers `
         | Select-Object Name,Userprincipalname,Enabled,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd_hh:mm:ss')}} `
         | sort-object stamp `
         | Out-Host
+
+    # Ask for confirmation before disabling
     $confirmation = Read-Host "Are you Sure You Want To Disable these users? (y/n)"
     if ($confirmation -eq 'y') {
         foreach ($inactiveUser in $inactiveUsers) {
             # Disable those users
             Disable-ADAccount $inactiveUser
             # Move those Disabled Users to an OU
-            Move-ADObject $OU.DistinguishedName
+            # TODO: Find solution for selecting disabled users OU
+            # Move-ADObject $OU.DistinguishedName
         }
     } else {
         Write-Host "No users were disabled."
     }
 }
 
-
 # Output Name and lastLogonTimestamp into CSV  
 # select-object Name,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd_hh:mm:ss')}} | # export-csv OLD_User.csv -notypeinformation
-
 function Disable-InactiveADComputers {
     ## Disable inactive computers, to be better integrated later
 
@@ -93,4 +88,22 @@ function Disable-InactiveADComputers {
     New-ADOrganizationalUnit -Name "Disabled Computers" -Path $DomainDN
     $OUPath = "OU=Disabled Computers,$DomainDN"
     Get-ADComputer -LDAPFilter "(&(objectCategory=computer)(objectClass=computer)(useraccountcontrol:1.2.840.113556.1.4.803:=2))" | Move-ADObject -TargetPath $OUPath
+}
+
+<# Creates a disabled Users OU and returns it #>
+function New-DisabledUsersOU {
+    param (
+        [switch]$WhatIf
+    )
+    if ($WhatIf) {
+        $WhatIfPreference = $true
+    }
+
+    # Create Disabled Users OU
+    $ouParams = @{
+        Name = "Disabled Users"
+        Path = (Get-ADDomain).DistinguishedName
+    }
+    $OU = New-ADOrganizationalUnit @ouParams
+    return $OU
 }
