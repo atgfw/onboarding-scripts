@@ -2,32 +2,6 @@
     Active Directory Cleanup Utilities
 #>
 
-import-module activedirectory  
-
-function Get-InactiveADUsers() {
-    param (
-        [int]$DaysInactive = 60
-    )
-    $time = (Get-Date).Adddays(-($DaysInactive)) 
-    $filter = {LastLogonTimeStamp -lt $time -and enabled -eq $true 
-        -and userprincipalname -notlike '*scan*' 
-        -and userprincipalname -notlike '*vpn*' 
-        -and userprincipalname -notlike '*service*' 
-        -and userprincipalname -notlike '*QB*' 
-        -and userprincipalname -notlike '*sync*' 
-        -and userprincipalname -notlike '*aad*'   
-        -and userprincipalname -notlike '*rely*'
-        -and userprincipalname -notlike '*MSOL*'
-        -and userprincipalname -notlike '*sql*'
-        -and userprincipalname -notlike '*copier*'
-        -and userprincipalname -notlike '*$*'
-        -and userprincipalname -notlike '*ldap*'
-        -and userprincipalname -notlike '*titan*'
-        -and userprincipalname -notlike '*sense*'}
-
-    return Get-ADUser -Filter $Filter
-}
-
 <# Disables all inactive Users #>
 function Disable-InactiveADUsers() {
     param (
