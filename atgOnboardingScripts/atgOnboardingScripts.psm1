@@ -1,0 +1,1 @@
+. $PSScriptRoot\activedirectory-cleanup.ps1

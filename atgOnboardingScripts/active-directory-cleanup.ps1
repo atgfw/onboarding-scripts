@@ -4,7 +4,6 @@
 
 import-module activedirectory  
 
-
 function Get-InactiveADUsers() {
     param (
         [int]$DaysInactive = 60
