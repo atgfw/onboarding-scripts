@@ -23,14 +23,14 @@ function Select-OU {
             $node = New-Object System.Windows.Forms.TreeNode
             $node.Text = $ou.Name
             $node.Tag = $ou.DistinguishedName
-            $parentNode.Nodes.Add($node)
+            [void]$parentNode.Nodes.Add($node) # TreeNodeCollection.Add() returns an int, clean that up so it doesn't spill into function output
             Add-OUsToTree -baseDN $ou.DistinguishedName -parentNode $node
         }
     }
     $rootNode = New-Object System.Windows.Forms.TreeNode
     $rootNode.Text = $domainRoot.Name
     $rootNode.Tag = $domainRoot.DistinguishedName
-    $treeView.Nodes.Add($rootNode)
+    [void]$treeView.Nodes.Add($rootNode)
     Add-OUsToTree $domainRoot.DistinguishedName $rootNode
     $treeView.ExpandAll()
     $table.Controls.Add($treeView)
@@ -41,10 +41,8 @@ function Select-OU {
     $okButton.AutoSize = 'True'
     $okButton.Text = 'Select'
     $okButton.Add_Click({
-        Write-Host $treeView.SelectedNode.Tag
         if ($treeView.SelectedNode.Tag) {
             $form.DialogResult = 'Ok'
-            $form.Tag = $treeView.SelectedNode.Tag
             $form.Close()
         }
     })
@@ -61,7 +59,6 @@ function Select-OU {
     $form.Controls.Add($bottomPanel)
 
     $form.Controls.add($table)
-
-    $form.ShowDialog()
-    return $form.Tag[-1]
+    $form.ShowDialog() | Out-Null
+    return $treeView.SelectedNode.Tag
 }
