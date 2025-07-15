@@ -1,8 +1,17 @@
 function Select-OU {
-    Import-Module ActiveDirectory -ErrorAction Break
+    <#
+    .SYNOPSIS
+        Shows a WinForms dialog box to select an Organizational Unit from the current Active Directory Domain
+
+    .EXAMPLE
+        $OU = Select-OU
+
+        The OU variable will be populated with the Distinguished Name of the selected OU
+    #>
     Add-Type -AssemblyName System.Windows.Forms
     Add-Type -AssemblyName System.Drawing
     $form = New-Object System.Windows.Forms.Form
+    $form.Text = "Select an OU"
 
     $table = New-Object System.Windows.Forms.TableLayoutPanel
     $table.Dock = 'Fill'
@@ -23,7 +32,7 @@ function Select-OU {
             $node = New-Object System.Windows.Forms.TreeNode
             $node.Text = $ou.Name
             $node.Tag = $ou.DistinguishedName
-            [void]$parentNode.Nodes.Add($node) # TreeNodeCollection.Add() returns an int, clean that up so it doesn't spill into function output
+            [void]$parentNode.Nodes.Add($node) # This function pollutes the Output pipe if not specifically handled
             Add-OUsToTree -baseDN $ou.DistinguishedName -parentNode $node
         }
     }

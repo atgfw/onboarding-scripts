@@ -6,7 +6,6 @@
 function Disable-InactiveADUsers() {
     param (
         [int]$DaysInactive = 60,
-        [ADOrgan]
         [switch]$WhatIf
     )
 
