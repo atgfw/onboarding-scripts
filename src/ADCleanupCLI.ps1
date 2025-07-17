@@ -69,5 +69,5 @@ function ADCleanupCLI {
             default {Write-Host "No match"}
         }
     }
-    Write-Host $selectedOU
+    $disabledUsers |  Move-ADObject -TargetPath (Select-OU)
 }
