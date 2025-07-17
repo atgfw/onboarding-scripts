@@ -78,7 +78,7 @@ function ADCleanupCLI {
         }
     }
     Write-Host "OU Selected: $($selectedOU.DistinguishedName)" -ForegroundColor "Green"
-    if (Read-Host -Prompt "Move newly-disabled users to this OU? (y/n)" -notlike 'y') {
+    if ((Read-Host -Prompt "Move newly-disabled users to this OU? (y/n)") -notlike 'y') {
         Write-Host "Cancelling operation" -ForegroundColor "Red"
         break
     }
