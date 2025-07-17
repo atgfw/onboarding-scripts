@@ -37,21 +37,26 @@ function ADCleanupCLI {
         Format-Table Name, SamAccountName,
         @{ Name='LastLogon (Sync)'; Expression={ Convert-ADFileTime $_.lastLogonTimestamp } },
         @{ Name='LastLogon (Local DC)'; Expression={ Convert-ADFileTime $_.LastLogon } }
-    if ((Read-Host -Prompt "Disable These Users? (y/n)" -ForegroundColor "Yellow") -notlike "y") {
+    if ((Read-Host -Prompt "Disable These Users? (y/n)") -notlike "y") {
         Write-Host "Cancelling operation" -ForegroundColor "Red"
         break
     }
     $disabledUsers = $users | Disable-AdAccount -Confirm -PassThru
+    if ($disabledUsers.count -eq 0) {
+        Write-Host "No Users were disabled" -ForegroundColor "Red"
+        break
+    }
     Write-Host "The Following Users Were Disabled:" -ForegroundColor "Green"
     $disabledUsers |
         Format-Table Name, DistinguishedName, ObjectGUID
     
+    Write-Host
     Write-Host "Step 2: Move Disabled Users to a new Disabled Users OU" -ForegroundColor "Green"
     Write-Host "Select an option:" -ForegroundColor "Yellow"
     Write-Host "(1): Create a new disabled users OU" -ForegroundColor "Yellow"
     Write-Host "(2): Enter the DistinguishedName of an existing disabled users OU" -ForegroundColor "Yellow"
     Write-Host "(3): Select an existing OU from a GUI menu" -ForegroundColor "Yellow"
-    Write-Host "(exit): Exit this menu"
+    Write-Host "(exit): Exit this menu" -ForegroundColor "Yellow"
     $userInput = Read-Host
     if ($userInput -like "*exit*") {
         break
