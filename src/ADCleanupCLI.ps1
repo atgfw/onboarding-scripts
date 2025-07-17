@@ -58,11 +58,7 @@ function ADCleanupCLI {
         Write-Host "(1): Create a new disabled users OU" -ForegroundColor "Yellow"
         Write-Host "(2): Enter the DistinguishedName of an existing disabled users OU" -ForegroundColor "Yellow"
         Write-Host "(3): Select an existing OU from a GUI menu" -ForegroundColor "Yellow"
-        Write-Host "(exit): Exit this menu" -ForegroundColor "Yellow"
         $userInput = Read-Host
-        if ($userInput -like "*exit*") {
-            break
-        }
         switch ($userInput) {
             1 {
                 $ouName = Read-Host "Enter a name for the new Disabled Users OU"
