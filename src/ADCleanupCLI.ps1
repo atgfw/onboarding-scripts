@@ -25,7 +25,7 @@ function ADCleanupCLI {
 
     if (-not $isAdmin) {
         Write-Warning 'This script normally requires "Run as Administrator"'
-        if ((Read-Host -Prompt "Continue without elevation? (y/n)" -notlike "y") {
+        if ((Read-Host -Prompt "Continue without elevation? (y/n)") -notlike "y") {
             break
         }
         Write-Warning "Running without elevation"
