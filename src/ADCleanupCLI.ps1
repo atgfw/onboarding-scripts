@@ -63,7 +63,7 @@ function ADCleanupCLI {
             break
         }
         switch ($userInput) {
-            1: {Write-Host "(1) Not yet implemented"}
+            1 {Write-Host "(1) Not yet implemented"}
             2 {Write-Host "(3) Not yet implemented"}
             3 {$selectedOU = Select-OU}
             default {Write-Host "No match"}
