@@ -72,7 +72,7 @@ function ADCleanupCLI {
                 $selectedOU = Get-ADOrganizationalUnit -Identity $ouDistinguishedName
             }
             3 {
-                $selectedOU = Get-ADOrganizationalUnit -Identity Select-OU
+                $selectedOU = Get-ADOrganizationalUnit -Identity (Select-OU)
             }
             default {Write-Host "No match"}
         }
