@@ -31,6 +31,7 @@ function ADCleanupCLI {
         Write-Host "Running without elevation" -ForegroundColor "Red"
     }
 
+    Write-Host "Step 1: Disable Inactive Users" -ForegroundColor "Green"
     $users = Get-InactiveADUsers
     Write-Host "Inactive Users to Disable:" -ForegroundColor "Green"
     $users |
@@ -63,11 +64,27 @@ function ADCleanupCLI {
             break
         }
         switch ($userInput) {
-            1 {Write-Host "(1) Not yet implemented"}
-            2 {Write-Host "(3) Not yet implemented"}
-            3 {$selectedOU = Select-OU}
+            1 {
+                $ouName = Read-Host "Enter a name for the new Disabled Users OU:"
+                $selectedOU = New-ADOrganizationalUnit -Name $ouName -PassThru
+                if ($selectedOU) {
+                    Write-Host "OU Created ($($selectedOU.DistinguishedName))!" -ForegroundColor "Green"
+                }
+            }
+            2 {
+                $ouDistinguishedName = Read-Host "Enter the DistinguishedName of the target OU"
+                $selectedOU = Get-ADOrganizationalUnit -Identity $ouDistinguishedName
+            }
+            3 {
+                $selectedOU = Get-ADOrganizationalUnit -Identity Select-OU
+            }
             default {Write-Host "No match"}
         }
     }
-    $disabledUsers |  Move-ADObject -TargetPath (Select-OU)
+    Write-Host "OU Selected: $($selectedOU.DistinguishedName)" -ForegroundColor "Green"
+    Read-Host -Prompt "Move newly-disabled users to this OU?"
+    $movedUsers = $disabledUsers | Move-ADObject -TargetPath ($selectedOU.DistinguishedName) -PassThru
+    Write-Host "Moved Users:"
+    $movedUsers |
+        Format-Table Name, DistinguishedName, ObjectGUID
 }
