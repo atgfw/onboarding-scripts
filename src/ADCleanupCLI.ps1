@@ -52,32 +52,7 @@ function ADCleanupCLI {
         Format-Table Name, DistinguishedName, ObjectGUID
     
     Write-Host "== Step 2: Move Disabled Users to a new Disabled Users OU ==" -ForegroundColor "Green"
-    $selectedOU = $null
-    while (-not $selectedOU) {
-        Write-Host "Select an option:" -ForegroundColor "Yellow"
-        Write-Host "(1): Create a new disabled users OU" -ForegroundColor "Yellow"
-        Write-Host "(2): Enter the DistinguishedName of an existing disabled users OU" -ForegroundColor "Yellow"
-        Write-Host "(3): Select an existing OU from a GUI menu" -ForegroundColor "Yellow"
-        $userInput = Read-Host
-        switch ($userInput) {
-            1 {
-                $ouName = Read-Host "Enter a name for the new Disabled Users OU"
-                $selectedOU = New-ADOrganizationalUnit -Name $ouName -PassThru
-                if ($selectedOU) {
-                    Write-Host "OU Created Successfully! ($($selectedOU.DistinguishedName))" `
-                        -ForegroundColor "Green"
-                }
-            }
-            2 {
-                $ouDistinguishedName = Read-Host "Enter the DistinguishedName of the target OU"
-                $selectedOU = Get-ADOrganizationalUnit -Identity $ouDistinguishedName
-            }
-            3 {
-                $selectedOU = Get-ADOrganizationalUnit -Identity (Select-OU)
-            }
-            default {Write-Host "No match"}
-        }
-    }
+    $selectedOU = OUMenu
     Write-Host "OU Selected: $($selectedOU.DistinguishedName)" -ForegroundColor "Yellow"
     if ((Read-Host -Prompt "Move newly-disabled users to this OU? (y/n)") -notlike 'y') {
         Write-Host "Cancelling operation" -ForegroundColor "Red"
