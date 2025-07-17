@@ -25,7 +25,7 @@ function ADCleanupCLI {
         Format-Table Name, SamAccountName,
         @{ Name='LastLogon (Sync)'; Expression={ Convert-ADFileTime $_.lastLogonTimestamp } },
         @{ Name='LastLogon (Local DC)'; Expression={ Convert-ADFileTime $_.LastLogon } }
-    if (Read-Host -Prompt "Disable These Users? (y/n)" -notlike "y") {
+    if ((Read-Host -Prompt "Disable These Users? (y/n)") -notlike "y") {
         Write-Host "Cancelling operation"
         break
     }
