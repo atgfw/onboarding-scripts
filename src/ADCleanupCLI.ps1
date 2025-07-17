@@ -64,7 +64,7 @@ function ADCleanupCLI {
                 $ouName = Read-Host "Enter a name for the new Disabled Users OU"
                 $selectedOU = New-ADOrganizationalUnit -Name $ouName -PassThru
                 if ($selectedOU) {
-                    Write-Host "OU Created ($($selectedOU.DistinguishedName))!" -ForegroundColor "Green"
+                    Write-Host "OU Created Successfully! ($($selectedOU.DistinguishedName))" -ForegroundColor "Green"
                 }
             }
             2 {
@@ -77,13 +77,13 @@ function ADCleanupCLI {
             default {Write-Host "No match"}
         }
     }
-    Write-Host "OU Selected: $($selectedOU.DistinguishedName)" -ForegroundColor "Green"
+    Write-Host "OU Selected: $($selectedOU.DistinguishedName)" -ForegroundColor "Yellow"
     if ((Read-Host -Prompt "Move newly-disabled users to this OU? (y/n)") -notlike 'y') {
         Write-Host "Cancelling operation" -ForegroundColor "Red"
         break
     }
     $movedUsers = $disabledUsers | Move-ADObject -TargetPath ($selectedOU.DistinguishedName) -PassThru
-    Write-Host "Moved Users:"
+    Write-Host "The Following Users Were Moved:" -ForegroundColor "Green"
     $movedUsers |
         Format-Table Name, DistinguishedName, ObjectGUID
 }
