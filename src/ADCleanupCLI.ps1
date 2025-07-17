@@ -31,7 +31,7 @@ function ADCleanupCLI {
         Write-Host "Running without elevation" -ForegroundColor "Red"
     }
 
-    Write-Host "Step 1: Disable Inactive Users" -ForegroundColor "Green"
+    Write-Host "== Step 1: Disable Inactive Users ==" -ForegroundColor "Green"
     $users = Get-InactiveADUsers
     Write-Host "Inactive Users to Disable:" -ForegroundColor "Green"
     $users |
@@ -51,7 +51,7 @@ function ADCleanupCLI {
     $disabledUsers |
         Format-Table Name, DistinguishedName, ObjectGUID
     
-    Write-Host "Step 2: Move Disabled Users to a new Disabled Users OU" -ForegroundColor "Green"
+    Write-Host "== Step 2: Move Disabled Users to a new Disabled Users OU ==" -ForegroundColor "Green"
     $selectedOU = $null
     while (-not $selectedOU) {
         Write-Host "Select an option:" -ForegroundColor "Yellow"
@@ -64,7 +64,8 @@ function ADCleanupCLI {
                 $ouName = Read-Host "Enter a name for the new Disabled Users OU"
                 $selectedOU = New-ADOrganizationalUnit -Name $ouName -PassThru
                 if ($selectedOU) {
-                    Write-Host "OU Created Successfully! ($($selectedOU.DistinguishedName))" -ForegroundColor "Green"
+                    Write-Host "OU Created Successfully! ($($selectedOU.DistinguishedName))" `
+                        -ForegroundColor "Green"
                 }
             }
             2 {
