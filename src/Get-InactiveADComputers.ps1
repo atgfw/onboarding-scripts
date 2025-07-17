@@ -47,6 +47,6 @@ function Get-InactiveADComputers() {
         $params['SearchBase'] = $SearchBase
     }
 
-    return Get-Computer @params |
+    return Get-ADComputer @params |
         Where-Object $filter
 }
