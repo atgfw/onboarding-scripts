@@ -50,20 +50,23 @@ function ADCleanupCLI {
     $disabledUsers |
         Format-Table Name, DistinguishedName, ObjectGUID
     
-    Write-Host
     Write-Host "Step 2: Move Disabled Users to a new Disabled Users OU" -ForegroundColor "Green"
-    Write-Host "Select an option:" -ForegroundColor "Yellow"
-    Write-Host "(1): Create a new disabled users OU" -ForegroundColor "Yellow"
-    Write-Host "(2): Enter the DistinguishedName of an existing disabled users OU" -ForegroundColor "Yellow"
-    Write-Host "(3): Select an existing OU from a GUI menu" -ForegroundColor "Yellow"
-    Write-Host "(exit): Exit this menu" -ForegroundColor "Yellow"
-    $userInput = Read-Host
-    if ($userInput -like "*exit*") {
-        break
+    $selectedOU = $null
+    while (-not $selectedOU) {
+        Write-Host "Select an option:" -ForegroundColor "Yellow"
+        Write-Host "(1): Create a new disabled users OU" -ForegroundColor "Yellow"
+        Write-Host "(2): Enter the DistinguishedName of an existing disabled users OU" -ForegroundColor "Yellow"
+        Write-Host "(3): Select an existing OU from a GUI menu" -ForegroundColor "Yellow"
+        Write-Host "(exit): Exit this menu" -ForegroundColor "Yellow"
+        $userInput = Read-Host
+        if ($userInput -like "*exit*") {
+            break
+        }
+        switch ($userInput) {
+            1: {Write-Host "(1) Not yet implemented"}
+            2: {Write-Host "(3) Not yet implemented"}
+            3: {$selectedOU = Select-OU}
+        }
     }
-    switch ($userInput) {
-        1: {Write-Host "(1) Not yet implemented"}
-        2: {ScannerGUI}
-        3: {Write-Host "(3) NOt yet implemented"}
-    }
+    Write-Host $selectedOU
 }
