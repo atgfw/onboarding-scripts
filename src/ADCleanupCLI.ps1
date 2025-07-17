@@ -24,25 +24,41 @@ function ADCleanupCLI {
         ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
     if (-not $isAdmin) {
-        Write-Warning 'This script normally requires "Run as Administrator"'
-        if ((Read-Host -Prompt "Continue without elevation? (y/n)") -notlike "y") {
+        Write-Host 'This script normally requires "Run as Administrator"' -ForegroundColor "Red"
+        if ((Read-Host -Prompt "Continue without elevation? (y/n)" -ForegroundColor "Yellow") -notlike "y") {
             break
         }
-        Write-Warning "Running without elevation"
+        Write-Host "Running without elevation" -ForegroundColor "Red"
     }
 
     $users = Get-InactiveADUsers
-    Write-Host "Inactive Users to Disable:"
+    Write-Host "Inactive Users to Disable:" -ForegroundColor "Green"
     $users |
         Format-Table Name, SamAccountName,
         @{ Name='LastLogon (Sync)'; Expression={ Convert-ADFileTime $_.lastLogonTimestamp } },
         @{ Name='LastLogon (Local DC)'; Expression={ Convert-ADFileTime $_.LastLogon } }
-    if ((Read-Host -Prompt "Disable These Users? (y/n)") -notlike "y") {
-        Write-Host "Cancelling operation"
+    if ((Read-Host -Prompt "Disable These Users? (y/n)" -ForegroundColor "Yellow") -notlike "y") {
+        Write-Host "Cancelling operation" -ForegroundColor "Red"
         break
     }
     $disabledUsers = $users | Disable-AdAccount -Confirm -PassThru
-    Write-Host "The Following Users Were Disabled"
+    Write-Host "The Following Users Were Disabled:" -ForegroundColor "Green"
     $disabledUsers |
-        Format-Table
+        Format-Table Name, DistinguishedName, ObjectGUID
+    
+    Write-Host "Step 2: Move Disabled Users to a new Disabled Users OU" -ForegroundColor "Green"
+    Write-Host "Select an option:" -ForegroundColor "Yellow"
+    Write-Host "(1): Create a new disabled users OU" -ForegroundColor "Yellow"
+    Write-Host "(2): Enter the DistinguishedName of an existing disabled users OU" -ForegroundColor "Yellow"
+    Write-Host "(3): Select an existing OU from a GUI menu" -ForegroundColor "Yellow"
+    Write-Host "(exit): Exit this menu"
+    $userInput = Read-Host
+    if ($userInput -like "*exit*") {
+        break
+    }
+    switch ($userInput) {
+        1: {Write-Host "(1) Not yet implemented"}
+        2: {ScannerGUI}
+        3: {Write-Host "(3) NOt yet implemented"}
+    }
 }
