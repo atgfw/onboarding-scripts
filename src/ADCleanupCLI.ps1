@@ -19,6 +19,18 @@ function Convert-ADFileTime {
     Moves disabled users to new OU
 #>
 function ADCleanupCLI {
+    # Returns $true if running elevated, otherwise $false
+    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
+        ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+    if (-not $isAdmin) {
+        Write-Warning 'This script normally requires "Run as Administrator"'
+        if ((Read-Host -Prompt "Continue without elevation? (y/n)" -notlike "y") {
+            break
+        }
+        Write-Warning "Running without elevation"
+    }
+
     $users = Get-InactiveADUsers
     Write-Host "Inactive Users to Disable:"
     $users |
