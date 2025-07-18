@@ -10,7 +10,7 @@ Remove-Item "$env:TEMP\OnboardingScripts.zip"
 Remove-Item "$($env:ProgramFiles)\WindowsPowerShell\Modules\OnboardingScripts" -Recurse
 
 Invoke-WebRequest `
-    -Uri https://github.com/atgfw/onboarding-scripts/archive/refs/heads/RefactorRock.zip `
+    -Uri https://github.com/atgfw/onboarding-scripts/archive/refs/heads/main.zip `
     -OutFile "$env:TEMP\OnboardingScripts.zip"
 
 Expand-Archive `
