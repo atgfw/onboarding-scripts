@@ -4,6 +4,26 @@ This is a collection of scripts to AD cleanup/onboarding scripts
 
 # Installation and Use
 
+```powershell
+Remove-Item "$env:TEMP\OnboardingScripts" -Recurse
+Remove-Item "$env:TEMP\OnboardingScripts.zip" 
+Remove-Item "$($env:ProgramFiles)\WindowsPowerShell\Modules\OnboardingScripts" -Recurse
+
+Invoke-WebRequest `
+    -Uri https://github.com/atgfw/onboarding-scripts/archive/refs/heads/RefactorRock.zip `
+    -OutFile "$env:TEMP\OnboardingScripts.zip"
+
+Expand-Archive `
+    -Path "$env:TEMP\OnboardingScripts.zip" `
+    -DestinationPath "$env:TEMP\OnboardingScripts"
+
+Get-ChildItem -Path "$env:TEMP\OnboardingScripts" `
+    | Select-Object -First 1 `
+    | Move-Item -Destination "$($env:ProgramFiles)\WindowsPowerShell\Modules\OnboardingScripts"
+
+Import-Module OnboardingScripts
+```
+
 # Exposed Functions
 
 ## ADCleanupCLI
