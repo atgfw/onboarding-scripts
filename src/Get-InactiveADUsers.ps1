@@ -38,12 +38,19 @@ function Get-InactiveADUsers() {
     $localThreshold = (Get-Date).AddDays(-$DaysInactive)
     $replicatedThreshold = (Get-Date).AddDays(-($DaysInactive+14)) # LastLogonTimestamp synchronization delay
 
+    $usernameFilter = {
+        $usernameFilterOutput = $true
+        foreach ($ignoreItem in $IgnoreList) {
+            $usernameFilterOutput = $_ -notlike $ignoreItem -and $usernameFilterOutput
+        }
+        return $usernameFilterOutput
+    }
+
     $filter = {
         [DateTime]::FromFileTime($_.LastLogon) -lt $localThreshold -and
         [DateTime]::FromFileTime($_.LastLogonTimeStamp) -lt $replicatedThreshold -and
         $_.enabled -eq $true -and
-        ($IgnoreList -notcontains $null -and
-            ($IgnoreList | ForEach-Object { $_pattern = $_; $_.userprincipalname -notlike $_pattern }) -notcontains $false)
+        $usernameFilter
     }
 
     $params = @{
