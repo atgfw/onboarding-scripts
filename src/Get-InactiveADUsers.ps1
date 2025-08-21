@@ -41,16 +41,15 @@ function Get-InactiveADUsers() {
     $usernameFilter = {
         $usernameFilterOutput = $true
         foreach ($ignoreItem in $IgnoreList) {
-            $usernameFilterOutput = $_ -notlike $ignoreItem -and $usernameFilterOutput
+            $usernameFilterOutput = ($_ -notlike $ignoreItem) -and $usernameFilterOutput
         }
-        return $usernameFilterOutput
+        $usernameFilterOutput
     }
 
     $filter = {
         [DateTime]::FromFileTime($_.LastLogon) -lt $localThreshold -and
         [DateTime]::FromFileTime($_.LastLogonTimeStamp) -lt $replicatedThreshold -and
-        $_.enabled -eq $true -and
-        $usernameFilter
+        $_.enabled -eq $true
     }
 
     $params = @{
@@ -63,5 +62,5 @@ function Get-InactiveADUsers() {
     }
 
     return Get-ADUser @params |
-        Where-Object $filter
+        Where-Object $filter | Where-Object $usernameFilter
 }
